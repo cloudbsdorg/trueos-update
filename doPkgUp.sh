@@ -60,16 +60,6 @@ PKG_CFLAG="-C /var/db/trueos-update/.pkgUpdate.conf"
 echo "PKG_CACHEDIR: $REALPKGDLCACHE" > /var/db/trueos-update/.pkgUpdate.conf
 echo "PKG_DBDIR: /var/db/trueos-update/pkgdb" >> /var/db/trueos-update/.pkgUpdate.conf
 
-# Cleanup the old pkgs
-echo "Removing old packages... Please wait..."
-pkg-static ${PKG_CFLAG} ${PKG_FLAG} unlock -ay
-
-# Since we cant remove pkgs via repository, this will have to do
-pkg-static query -e '%n !~ FreeBSD-*' %o | xargs pkg-static ${PKG_CFLAG} ${PKG_FLAG} delete -fy
-if [ $? -ne 0 ] ; then
-  echo "WARNING: Failed removing old packages..."
-fi
-
 # Need to export this before installing pkgs, some scripts may try to be interactive
 PACKAGE_BUILDING="YES"
 export PACKAGE_BUILDING
