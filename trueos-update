@@ -321,7 +321,7 @@ build_pkg_list()
   fi
 
   # Build top-level list of pkgs installed
-  ${PKG_CMD} query -e '%a = 0' '%o %n-%v' | grep -v "^base " | sort > $OLDPKGLIST
+  ${PKG_CMD} query -e '%a = 0' '%o %n' | grep -v "^base " | sort > $OLDPKGLIST
   cp ${OLDPKGLIST} /var/db/trueos-update/previous-user-pkgs
 
   echo "The following user-added packages will be installed / upgraded:" > ${PKGUPGRADELOG}
