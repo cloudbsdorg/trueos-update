@@ -627,10 +627,10 @@ prep_pkgs_chroot()
 
   # Set the default ABI
   FBVER=$(${PKG_CMD} ${PKG_CFLAG} ${PKG_FLAG} rquery '%v' ${BASENAME}-runtime | cut -d '.' -f 1)
-  ABI="FreeBSD:${FBVER}:`uname -m`"
-  ABI_FLAG="-o ABI=$ABI"
+  NEWABI="FreeBSD:${FBVER}:`uname -m`"
+  ABI_FLAG="-o ABI=$NEWABI"
   export ABI_FLAG
-  echo_log "Setting new system ABI to: $ABI"
+  echo_log "Setting new system ABI to: $NEWABI"
 
   # Start by installing runtime which is essential to boot-strapping others
   ${PKG_CMD} -r ${STAGEMNT} ${PKG_CFLAG} ${PKG_FLAG} ${ABI_FLAG} install -U -yf ${BASENAME}-runtime >>${LOGOUT} 2>>${LOGOUT}
