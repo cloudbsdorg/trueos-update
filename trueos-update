@@ -321,8 +321,8 @@ build_pkg_list()
   fi
 
   # Build top-level list of pkgs installed
-  ${PKG_CMD} query -e '%a = 0' '%o' | grep -v '^base$' | sort > $OLDPKGLIST
-  cp ${OLDPKGLIST} /var/db/trueos-update/previous-user-pkgs
+  ${PKG_CMD} query -e '%a = 0' '%o %n-%v' | grep -v '^base ' | sort > $OLDPKGLIST
+  ${PKG_CMD} query -e '%a = 0' '%o' | grep -v '^base$' | sort > /var/db/trueos-update/previous-user-pkgs
 
   echo "The following user-added packages will be installed / upgraded:" > ${PKGUPGRADELOG}
   echo "-----------------------------------------------" >> $PKGUPGRADELOG
@@ -334,9 +334,9 @@ build_pkg_list()
   echo "-----------------------------------------------"
   cat $OLDPKGLIST
   echo "-----------------------------------------------"
-  echo "Upgrade starting in 10 seconds!"
+  echo "Upgrade starting in 5 seconds!"
   echo "-----------------------------------------------"
-  read -p "Press ENTER to abort upgrade" -t 10 BREAKOUT
+  read -p "Press ENTER to abort upgrade" -t 5 BREAKOUT
   if [ $? -eq 0 ] ; then
 	  exit_err "User aborted upgrade!"
   fi
@@ -373,6 +373,7 @@ pkg_fetch_verify() {
   _err=$?
   tail -n 1 ${PKGUPGRADELOG} | grep -q -e "failed checksum" -e "timed out"
   if [ $_err -ne 0 -o $? -eq 0 ]; then
+    echo "Failed Package: Retrying download"
     pkg_fetch_verify "$fetchPkg" "$fetchPkgFile" "$fetchRetries"
   fi
 
@@ -382,6 +383,7 @@ pkg_fetch_verify() {
      if [ -e "${REALPKGDLCACHE}/All/${fetchPkgFile}" ] ; then
         REALPKGDLCACHE="${REALPKGDLCACHE}/All"
      else
+        echo "Missing Package: ${REALPKGDLCACHE}/$fetchPkgFile"
         pkg_fetch_verify "$fetchPkg" "$fetchPkgFile" "$fetchRetries"
      fi
   fi
