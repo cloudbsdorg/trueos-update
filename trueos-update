@@ -634,13 +634,13 @@ prep_pkgs_chroot()
 
   # Start by installing runtime which is essential to boot-strapping others
   ${PKG_CMD} -r ${STAGEMNT} ${PKG_CFLAG} ${PKG_FLAG} ${ABI_FLAG} install -U -yf ${BASENAME}-runtime >>${LOGOUT} 2>>${LOGOUT}
-  if [ $? -eq 0 ] ; then
+  if [ $? -ne 0 ] ; then
       exit_err "Failed boot-strapping ${BASENAME}-runtime"
   fi
 
   # Do it again now to get the pkg registered on the system
   ${PKG_CMD} -c ${STAGEMNT} ${PKG_CFLAG} ${PKG_FLAG} ${ABI_FLAG} install -U -yf ${BASENAME}-runtime >>${LOGOUT} 2>>${LOGOUT}
-  if [ $? -eq 0 ] ; then
+  if [ $? -ne 0 ] ; then
       exit_err "Failed ${BASENAME}-runtime registration"
   fi
 
