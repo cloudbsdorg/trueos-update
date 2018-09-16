@@ -321,7 +321,7 @@ build_pkg_list()
   fi
 
   # Build top-level list of pkgs installed
-  ${PKG_CMD} query -e '%a = 0' '%o %n' | grep -v "^base " | sort > $OLDPKGLIST
+  ${PKG_CMD} query -e '%a = 0' '%o' | grep -v '^base$' | sort > $OLDPKGLIST
   cp ${OLDPKGLIST} /var/db/trueos-update/previous-user-pkgs
 
   echo "The following user-added packages will be installed / upgraded:" > ${PKGUPGRADELOG}
@@ -333,6 +333,8 @@ build_pkg_list()
   echo "The following user-added packages will be installed / upgraded:"
   echo "-----------------------------------------------"
   cat $OLDPKGLIST
+  echo "-----------------------------------------------"
+  echo "Upgrade starting in 10 seconds!"
   echo "-----------------------------------------------"
   read -p "Press ENTER to abort upgrade" -t 10 BREAKOUT
   if [ $? -eq 0 ] ; then
