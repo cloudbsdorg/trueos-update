@@ -322,7 +322,7 @@ build_pkg_list()
 
   # Build top-level list of pkgs installed
   ${PKG_CMD} query -e '%a = 0' '%o %n-%v' | grep -v '^base ' | sort > $OLDPKGLIST
-  ${PKG_CMD} query -e '%a = 0' '%o' | grep -v '^base$' | sort > /var/db/trueos-update/previous-user-pkgs
+  ${PKG_CMD} query -e '%a = 0' '%o' | grep -v '^base$' | sort > /var/db/trueos-update/.previous-user-pkgs.new
 
   echo "The following user-added packages will be installed / upgraded:" > ${PKGUPGRADELOG}
   echo "-----------------------------------------------" >> $PKGUPGRADELOG
@@ -332,7 +332,7 @@ build_pkg_list()
   # Lets show the user what packages are expected to be installed
   echo "The following user-added packages will be installed / upgraded:"
   echo "-----------------------------------------------"
-  cat $OLDPKGLIST
+  cat /var/db/trueos-update/.previous-user-pkgs.new
   echo "-----------------------------------------------"
   echo "Upgrade starting in 5 seconds!"
   echo "-----------------------------------------------"
@@ -403,15 +403,18 @@ dl_pkgs()
 
   # Update the DB first
   echo_log "Updating the package repo database..."
-  ${PKG_CMD} ${PKG_CFLAG} ${PKG_FLAG} update -f >/dev/null 2>/dev/null
+  ${PKG_CMD} ${PKG_CFLAG} ${PKG_FLAG} update -f
+  if [ $? -ne 0 ] ; then
+    exit_err "Failed upgrading package repo"
+  fi
   sync
   sleep 2
 
   # Figure out the base package name, if its FreeBSD or $OTHER
-  BASENAME=$(${PKG_CMD} ${PKG_FLAG} rquery '%o %n-%v' | grep ^base | grep -e '-runtime-' | head -n 1 | awk '{print $2}' | cut -d '-' -f 1)
+  BASENAME=$(${PKG_CMD} ${PKG_CFLAG} ${PKG_FLAG} rquery -U '%o %n-%v' | grep ^base | grep -e '-runtime-' | head -n 1 | awk '{print $2}' | cut -d '-' -f 1)
 
   # Clean pkgs
-  SYSREV=$(${PKG_CMD} ${PKG_FLAG} rquery '%v' ${BASENAME}-runtime | head -n 1)
+  SYSREV=$(${PKG_CMD} ${PKG_CFLAG} ${PKG_FLAG} rquery -U '%v' ${BASENAME}-runtime | head -n 1)
   if [ -e "${DLREV}" -a "$(cat ${DLREV})" != "${SYSREV}" ] ; then
     echo_log "Cleaning stale pkg upgrade cache..."
     rm -rf ${PKGDLCACHE}
@@ -433,7 +436,7 @@ dl_pkgs()
     unset FETCHFILENAME
     echo_log "Determining package name for: ${pkgOrigin}"
     echo "Determining package name for ${pkgOrigin}" >> ${PKGUPGRADELOG}
-    FETCHFILENAME="`${PKG_CMD} ${PKG_FLAG} rquery -U '%n-%v' $pkgOrigin 2>/dev/null | head -n 1`"
+    FETCHFILENAME="`${PKG_CMD} ${PKG_CFLAG} ${PKG_FLAG} rquery -U '%n-%v' $pkgOrigin 2>/dev/null | head -n 1`"
     if [ -z "$FETCHFILENAME" ] ; then
        OBSOLETE_PACKAGES="${pkgOrigin} ${OBSOLETE_PACKAGES}"
        echo_log "*****"
