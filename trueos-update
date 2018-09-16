@@ -340,6 +340,7 @@ build_pkg_list()
   if [ $? -eq 0 ] ; then
 	  exit_err "User aborted upgrade!"
   fi
+  echo ""
 }
 
 ###
