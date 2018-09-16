@@ -322,11 +322,22 @@ build_pkg_list()
 
   # Build top-level list of pkgs installed
   ${PKG_CMD} query -e '%a = 0' '%o %n-%v' | grep -v "^base " | sort > $OLDPKGLIST
+  cp ${OLDPKGLIST} /var/db/trueos-update/previous-user-pkgs
 
-  echo "Original top-level packages:" > $PKGUPGRADELOG
+  echo "The following user-added packages will be installed / upgraded:" > ${PKGUPGRADELOG}
   echo "-----------------------------------------------" >> $PKGUPGRADELOG
   cat $OLDPKGLIST >> $PKGUPGRADELOG
   echo "-----------------------------------------------" >> $PKGUPGRADELOG
+
+  # Lets show the user what packages are expected to be installed
+  echo "The following user-added packages will be installed / upgraded:"
+  echo "-----------------------------------------------"
+  cat $OLDPKGLIST
+  echo "-----------------------------------------------"
+  read -p "Press ENTER to abort upgrade" -t 10 BREAKOUT
+  if [ $? -eq 0 ] ; then
+	  exit_err "User aborted upgrade!"
+  fi
 }
 
 ###

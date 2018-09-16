@@ -144,6 +144,9 @@ touch /failed-pkg-list
 mv /failed-pkg-list /var/trueos-update/
 pkg-static info > /var/trueos-update/current-pkg-list
 
+# Build top-level list of pkgs installed
+pkg-static query -e '%a = 0' '%o %n-%v' | grep -v "^base " | sort > /var/trueos-update/current-user-pkgs
+
 # Update the boot-loader to latest
 update_bootloader
 
