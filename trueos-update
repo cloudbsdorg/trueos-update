@@ -601,7 +601,7 @@ prep_pkgs_chroot()
 
   # Determine which packages are installed
   echo_log "Installing base packages..."
-  ${PKG_CMD} -c ${STAGEMNT} ${PKG_CFLAG} ${PKG_FLAG} ${ABI_FLAG} query -e '%o~base' '%n' > /tmp/.fpkg.$$
+  ${PKG_CMD} -c ${STAGEMNT} ${PKG_CFLAG} ${PKG_FLAG} ${ABI_FLAG} rquery -e '%o~base' '%n' > /tmp/.fpkg.$$
 
   echo_log "Deleting old packages..."
 
