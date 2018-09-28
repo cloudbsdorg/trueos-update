@@ -411,7 +411,8 @@ dl_pkgs()
   sleep 2
 
   # Figure out the base package name, if its FreeBSD or $OTHER
-  BASENAME=$(${PKG_CMD} ${PKG_CFLAG} ${PKG_FLAG} rquery -U '%o %n-%v' | grep ^base | grep -e '-runtime-' | head -n 1 | awk '{print $2}' | cut -d '-' -f 1)
+  BASENAME=$(${PKG_CMD} ${PKG_CFLAG} ${PKG_FLAG} rquery -U '%o %n-%v' | grep '^base ' | grep -e '-runtime-' | head -n 1 | awk '{print $2}' | cut -d '-' -f 1)
+  echo "Using the following base package name: $BASENAME"
 
   # Clean pkgs
   SYSREV=$(${PKG_CMD} ${PKG_CFLAG} ${PKG_FLAG} rquery -U '%v' ${BASENAME}-runtime | head -n 1)
@@ -580,7 +581,7 @@ prep_pkgs_chroot()
   fi
 
   # Figure out the base package name, if its FreeBSD or $OTHER
-  BASENAME=$(${PKG_CMD} ${PKG_CFLAG} ${PKG_FLAG} rquery '%o %n-%v' | grep ^base | grep -e '-runtime-' | head -n 1 | awk '{print $2}' | cut -d '-' -f 1)
+  BASENAME=$(${PKG_CMD} ${PKG_CFLAG} ${PKG_FLAG} rquery '%o %n-%v' | grep '^base ' | grep -e '-runtime-' | head -n 1 | awk '{print $2}' | cut -d '-' -f 1)
 
   # Unlock all packages first
   echo_log "Unlocking packages..."
