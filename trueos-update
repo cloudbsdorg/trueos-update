@@ -684,6 +684,7 @@ prep_pkgs_chroot()
     echo_log "Installing: $fpkg"
     ${PKG_CMD} -c ${STAGEMNT} ${PKG_CFLAG} ${PKG_FLAG} ${ABI_FLAG} install -U -yf $fpkg >>${LOGOUT} 2>>${LOGOUT}
     if [ $? -ne 0 ] ; then
+      echo_log "$(tail -n 50 ${LOGOUT})"
       echo_log "FAILED: Installing world base package: $fpkg"
       rm /tmp/.fpkg.$$
       exit 1
