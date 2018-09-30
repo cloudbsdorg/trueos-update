@@ -602,7 +602,7 @@ prep_pkgs_chroot()
 
   # Determine which packages are installed
   echo_log "Installing base packages..."
-  ${PKG_CMD} -c ${STAGEMNT} ${PKG_CFLAG} ${PKG_FLAG} ${ABI_FLAG} rquery -e '%o~base' '%n' > /tmp/.fpkg.$$
+  ${PKG_CMD} -c ${STAGEMNT} ${PKG_CFLAG} ${PKG_FLAG} ${ABI_FLAG} rquery -U -e '%o~base' '%n' > /tmp/.fpkg.$$
 
   echo_log "Deleting old packages..."
 
@@ -614,11 +614,17 @@ prep_pkgs_chroot()
     exit 1
   fi
 
-  # Remove *ALL* the packages, we need a clean slate to avoid pkg conflicts going sideways
+  # Remove *ALL* the packages inside chroot, we need a clean slate to avoid pkg conflicts going sideways
   ${PKG_CMD} -c ${STAGEMNT} ${PKG_CFLAG} ${PKG_FLAG} ${ABI_FLAG} delete -yg \* >>${LOGOUT} 2>>${LOGOUT}
   if [ $? -ne 0 ] ; then
-    echo_log "FAILED Deleting old base packages"
+    echo_log "FAILED Deleting old base packages from chroot"
     exit 1
+  fi
+
+  # Remove *ALL* packages but from alt root now using -a
+  ${PKG_CMD} -r ${STAGEMNT} ${PKG_CFLAG} ${PKG_FLAG} ${ABI_FLAG} delete -ya >>${LOGOUT} 2>>${LOGOUT}
+  if [ $? -ne 0 ] ; then
+      echo_log "WARNING: Failed deleting old base packages from alt-root"
   fi
 
   # Set any blacklist items
@@ -627,7 +633,7 @@ prep_pkgs_chroot()
   fi
 
   # Set the default ABI
-  FBVER=$(${PKG_CMD} ${PKG_CFLAG} ${PKG_FLAG} rquery '%v' ${BASENAME}-runtime | cut -d '.' -f 1)
+  FBVER=$(${PKG_CMD} ${PKG_CFLAG} ${PKG_FLAG} rquery -U '%v' ${BASENAME}-runtime | cut -d '.' -f 1)
   NEWABI="FreeBSD:${FBVER}:`uname -m`"
   ABI_FLAG="-o ABI=$NEWABI"
   export ABI_FLAG
