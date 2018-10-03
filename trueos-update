@@ -163,7 +163,7 @@ update_pkg_conf() {
   if [ $? -eq 0 ] ; then
 	  cat >/etc/pkg/TrueOS.conf <<EOF
 TrueOS: {
-  url: "https://pkg.trueos.org/pkg/plasma-unstable/${ABI}/latest",
+  url: "https://pkg.trueos.org/pkg/plasma-unstable/\${ABI}/latest",
   signature_type: "pubkey",
   pubkey: "/usr/share/keys/pkg/trueos.pub",
   enabled: yes
