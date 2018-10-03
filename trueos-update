@@ -153,6 +153,25 @@ is_net_up() {
   return $ret
 }
 
+update_pkg_conf() {
+  if [ ! -e "/etc/pkg/TrueOS.conf" ] ; then
+    return 0
+  fi
+
+  # Update the plasma-unstable repo url
+  cat /etc/pkg/TrueOS.conf | grep -v "^#" | grep "url:" | grep -q "/plasma-unstable/ports/"
+  if [ $? -eq 0 ] ; then
+	  cat >/etc/pkg/TrueOS.conf <<EOF
+TrueOS: {
+  url: "https://pkg.trueos.org/pkg/plasma-unstable/${ABI}/latest",
+  signature_type: "pubkey",
+  pubkey: "/usr/share/keys/pkg/trueos.pub",
+  enabled: yes
+}
+EOF
+  fi
+
+}
 
 checkup_pkgs() {
 
@@ -908,6 +927,11 @@ if [ $# -eq 0 ] ; then
    exit 1
 fi
 
+
+# Check if we can update the pkg repo config information
+if [ "$(id -u)" = "0" ] ; then
+	update_pkg_conf
+fi
 
 while [ $# -gt 0 ] ; do
 
