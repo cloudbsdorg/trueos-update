@@ -82,7 +82,11 @@ UPDATEDOTD="/usr/local/etc/pcupdate.d"
 TRIGGERFILE="/tmp/.sysupdatetraytrigger"
 
 # PKG_CMD to use
-PKG_CMD="/usr/sbin/pkg-static"
+if [ -e "/usr/sbin/pkg-static" ] ; then
+	PKG_CMD="/usr/sbin/pkg-static"
+else
+	PKG_CMD="/usr/local/sbin/pkg-static"
+fi
 
 # Make sure we don't keep these from system environment
 unset INJAIL PKG_FLAG
