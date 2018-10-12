@@ -613,9 +613,7 @@ prep_pkgs_chroot()
   # Unlock all packages first
   echo_log "Unlocking packages..."
   ${PKG_CMD} -c ${STAGEMNT} ${PKG_CFLAG} ${PKG_FLAG} unlock -ay >>${LOGOUT} 2>>${LOGOUT}
-  ${PKG_CMD} -r ${STAGEMNT} ${PKG_CFLAG} ${PKG_FLAG} unlock -ay >>${LOGOUT} 2>>${LOGOUT}
   ${PKG_CMD} -c ${STAGEMNT} ${PKG_CFLAG} ${PKG_FLAG} set -ay -v 0 >>${LOGOUT} 2>>${LOGOUT}
-  ${PKG_CMD} -r ${STAGEMNT} ${PKG_CFLAG} ${PKG_FLAG} set -ay -v 0 >>${LOGOUT} 2>>${LOGOUT}
 
   # Check if we have -devel or -debug packages and re-install them
   DEVPKG="NO"
@@ -650,12 +648,6 @@ prep_pkgs_chroot()
     exit 1
   fi
 
-  # Remove *ALL* packages but from alt root now using -a
-  ${PKG_CMD} -r ${STAGEMNT} ${PKG_CFLAG} ${PKG_FLAG} ${ABI_FLAG} delete -ya >>${LOGOUT} 2>>${LOGOUT}
-  if [ $? -ne 0 ] ; then
-      echo_log "WARNING: Failed deleting old base packages from alt-root"
-  fi
-
   # Set any blacklist items
   if [ -e "/etc/trueos-base.json" ] ; then
     BLACKLISTPKG="$(jq -r '."blacklist" | join (" ")' /etc/trueos-base.json)"
@@ -671,7 +663,12 @@ prep_pkgs_chroot()
   # Start by installing runtime which is essential to boot-strapping others
   ${PKG_CMD} -r ${STAGEMNT} ${PKG_CFLAG} ${PKG_FLAG} ${ABI_FLAG} install -U -yf ${BASENAME}-runtime >>${LOGOUT} 2>>${LOGOUT}
   if [ $? -ne 0 ] ; then
-      exit_err "Failed boot-strapping ${BASENAME}-runtime"
+      exit_err "Failed alt-root boot-strapping ${BASENAME}-runtime"
+  fi
+
+  ${PKG_CMD} -c ${STAGEMNT} ${PKG_CFLAG} ${PKG_FLAG} ${ABI_FLAG} install -U -yf ${BASENAME}-runtime >>${LOGOUT} 2>>${LOGOUT}
+  if [ $? -ne 0 ] ; then
+      exit_err "Failed chroot boot-strapping ${BASENAME}-runtime"
   fi
 
   # Install new base packages
