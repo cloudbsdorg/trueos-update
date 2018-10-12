@@ -597,7 +597,11 @@ prep_pkgs_chroot()
   PACKAGE_BUILDING="YES"
   export PACKAGE_BUILDING
 
-  PKG_CMD="${PTMPDIR}/usr/sbin/pkg-static"
+  if [ -e "${PTMPDIR}/usr/local/sbin/pkg-static" ] ; then
+    PKG_CMD="${PTMPDIR}/usr/local/sbin/pkg-static"
+  else
+    PKG_CMD="${PTMPDIR}/usr/sbin/pkg-static"
+  fi
   if [ ! -e "$PKG_CMD" ] ; then
     echo_log "Missing /usr/sbin/pkg-static binary!"
     exit 1
