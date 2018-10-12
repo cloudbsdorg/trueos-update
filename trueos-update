@@ -613,7 +613,9 @@ prep_pkgs_chroot()
   # Unlock all packages first
   echo_log "Unlocking packages..."
   ${PKG_CMD} -c ${STAGEMNT} ${PKG_CFLAG} ${PKG_FLAG} unlock -ay >>${LOGOUT} 2>>${LOGOUT}
-  ${PKG_CMD} -c ${STAGEMNT} ${PKG_CFLAG} ${PKG_FLAG} set -a -v 0 >>${LOGOUT} 2>>${LOGOUT}
+  ${PKG_CMD} -r ${STAGEMNT} ${PKG_CFLAG} ${PKG_FLAG} unlock -ay >>${LOGOUT} 2>>${LOGOUT}
+  ${PKG_CMD} -c ${STAGEMNT} ${PKG_CFLAG} ${PKG_FLAG} set -ay -v 0 >>${LOGOUT} 2>>${LOGOUT}
+  ${PKG_CMD} -r ${STAGEMNT} ${PKG_CFLAG} ${PKG_FLAG} set -ay -v 0 >>${LOGOUT} 2>>${LOGOUT}
 
   # Check if we have -devel or -debug packages and re-install them
   DEVPKG="NO"
@@ -667,12 +669,10 @@ prep_pkgs_chroot()
   echo_log "Setting new system ABI to: $NEWABI"
 
   # Start by installing runtime which is essential to boot-strapping others
-  export PKG_DBDIR="${STAGEMNT}/var/db/pkg"
   ${PKG_CMD} -r ${STAGEMNT} ${PKG_CFLAG} ${PKG_FLAG} ${ABI_FLAG} install -U -yf ${BASENAME}-runtime >>${LOGOUT} 2>>${LOGOUT}
   if [ $? -ne 0 ] ; then
       exit_err "Failed boot-strapping ${BASENAME}-runtime"
   fi
-  unset PKG_DBDIR
 
   # Install new base packages
   while read fpkg
