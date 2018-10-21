@@ -175,6 +175,19 @@ TrueOS: {
 EOF
   fi
 
+  # Update the unstable repo url
+  cat /etc/pkg/TrueOS.conf | grep -v "^#" | grep "url:" | grep -q "/unstable/ports/"
+  if [ $? -eq 0 ] ; then
+	  cat >/etc/pkg/TrueOS.conf <<EOF
+TrueOS: {
+  url: "https://pkg.trueos.org/pkg/unstable/\${ABI}/latest",
+  signature_type: "pubkey",
+  pubkey: "/usr/share/keys/pkg/trueos.pub",
+  enabled: yes
+}
+EOF
+  fi
+
 }
 
 checkup_pkgs() {
