@@ -198,7 +198,7 @@ checkup_pkgs() {
     echo "Updating the pkg database..."
     ${PKG_CMD} ${PKG_CFLAG} ${PKG_FLAG} update -f >/tmp/.updateOut.$$ 2>&1
     if [ $? -ne 0 ] ; then
-      grep -q "Newer OS version" /tmp/.updateOut.$$
+      grep -q "wrong ABI:" /tmp/.updateOut.$$
       if [ $? -eq 0 ] ; then
         rm /tmp/.updateOut.$$
         updates_are_available
@@ -439,19 +439,31 @@ dl_pkgs()
 
   # Update the DB first
   echo_log "Updating the package repo database..."
-  ${PKG_CMD} ${PKG_CFLAG} ${PKG_FLAG} update -f
+  ${PKG_CMD} ${PKG_CFLAG} ${PKG_FLAG} update -f >${STATEDIR}/update.out 2>&1
   if [ $? -ne 0 ] ; then
-    exit_err "Failed upgrading package repo"
+    grep -q "wrong ABI: " ${STATEDIR}/update.out
+    if [ $? -eq 0 ] ; then
+      # Get the new ABI
+      NEWABI=$(cat ${STATEDIR}/update.out | grep "wrong ABI: " | cut -d ':' -f 3-5 | tr -d ' ')
+      ABI_FLAG="-o ABI=${NEWABI}"
+      ${PKG_CMD} ${PKG_CFLAG} ${PKG_FLAG} ${ABI_FLAG} update -f >${STATEDIR}/update.out 2>&1
+      if [ $? -ne 0 ] ; then
+	cat ${STATEDIR}/update.out
+        exit_err "Failed upgrading package repo with new ABI"
+      fi
+    else
+      exit_err "Failed upgrading package repo"
+    fi
   fi
   sync
   sleep 2
 
   # Figure out the base package name, if its FreeBSD or $OTHER
-  BASENAME=$(${PKG_CMD} ${PKG_CFLAG} ${PKG_FLAG} rquery -U '%o %n-%v' | grep '^base ' | grep -e '-runtime-' | head -n 1 | awk '{print $2}' | cut -d '-' -f 1)
+  BASENAME=$(${PKG_CMD} ${PKG_CFLAG} ${PKG_FLAG} ${ABI_FLAG} rquery -U '%o %n-%v' | grep '^base ' | grep -e '-runtime-' | head -n 1 | awk '{print $2}' | cut -d '-' -f 1)
   echo "Using the following base package name: $BASENAME"
 
   # Clean pkgs
-  SYSREV=$(${PKG_CMD} ${PKG_CFLAG} ${PKG_FLAG} rquery -U '%v' ${BASENAME}-runtime | head -n 1)
+  SYSREV=$(${PKG_CMD} ${PKG_CFLAG} ${PKG_FLAG} ${ABI_FLAG} rquery -U '%v' ${BASENAME}-runtime | head -n 1)
   if [ -e "${DLREV}" -a "$(cat ${DLREV})" != "${SYSREV}" ] ; then
     echo_log "Cleaning stale pkg upgrade cache..."
     rm -rf ${PKGDLCACHE}
@@ -473,7 +485,7 @@ dl_pkgs()
     unset FETCHFILENAME
     echo_log "Determining package name for: ${pkgOrigin}"
     echo "Determining package name for ${pkgOrigin}" >> ${PKGUPGRADELOG}
-    FETCHFILENAME="`${PKG_CMD} ${PKG_CFLAG} ${PKG_FLAG} rquery -U '%n-%v' $pkgOrigin 2>/dev/null | head -n 1`"
+    FETCHFILENAME="`${PKG_CMD} ${PKG_CFLAG} ${PKG_FLAG} ${ABI_FLAG} rquery -U '%n-%v' $pkgOrigin 2>/dev/null | head -n 1`"
     if [ -z "$FETCHFILENAME" ] ; then
        OBSOLETE_PACKAGES="${pkgOrigin} ${OBSOLETE_PACKAGES}"
        echo_log "*****"
@@ -503,7 +515,7 @@ dl_pkgs()
   while :
   do
     attempts=$(expr $attempts + 1)
-    run_cmd_wtee "${PKG_CMD} ${PKG_CFLAG} ${PKG_FLAG} fetch -U -d -y -g ${BASENAME}-*" "${PKGUPGRADELOG}"
+    run_cmd_wtee "${PKG_CMD} ${PKG_CFLAG} ${PKG_FLAG} ${ABI_FLAG} fetch -U -d -y -g ${BASENAME}-*" "${PKGUPGRADELOG}"
     _err=$?
     tail -n 1 ${PKGUPGRADELOG} | grep -q -e "failed checksum" -e "timed out" -e "not found" -e "No packages"
     if [ $_err -ne 0 -o $? -eq 0 ]; then
@@ -610,10 +622,10 @@ prep_pkgs_chroot()
   PACKAGE_BUILDING="YES"
   export PACKAGE_BUILDING
 
-  if [ -e "${PTMPDIR}/usr/local/sbin/pkg-static" ] ; then
-    PKG_CMD="${PTMPDIR}/usr/local/sbin/pkg-static"
+  if [ -e "/usr/local/sbin/pkg-static" ] ; then
+    PKG_CMD="/usr/local/sbin/pkg-static"
   else
-    PKG_CMD="${PTMPDIR}/usr/sbin/pkg-static"
+    PKG_CMD="/usr/sbin/pkg-static"
   fi
   if [ ! -e "$PKG_CMD" ] ; then
     echo_log "Missing /usr/sbin/pkg-static binary!"
@@ -621,12 +633,12 @@ prep_pkgs_chroot()
   fi
 
   # Figure out the base package name, if its FreeBSD or $OTHER
-  BASENAME=$(${PKG_CMD} ${PKG_CFLAG} ${PKG_FLAG} rquery '%o %n-%v' | grep '^base ' | grep -e '-runtime-' | head -n 1 | awk '{print $2}' | cut -d '-' -f 1)
+  BASENAME=$(${PKG_CMD} ${PKG_CFLAG} ${PKG_FLAG} ${ABI_FLAG} rquery '%o %n-%v' | grep '^base ' | grep -e '-runtime-' | head -n 1 | awk '{print $2}' | cut -d '-' -f 1)
 
   # Unlock all packages first
   echo_log "Unlocking packages..."
-  ${PKG_CMD} -c ${STAGEMNT} ${PKG_CFLAG} ${PKG_FLAG} unlock -ay >>${LOGOUT} 2>>${LOGOUT}
-  ${PKG_CMD} -c ${STAGEMNT} ${PKG_CFLAG} ${PKG_FLAG} set -ay -v 0 >>${LOGOUT} 2>>${LOGOUT}
+  ${PKG_CMD} -c ${STAGEMNT} ${PKG_CFLAG} ${PKG_FLAG} ${ABI_FLAG} unlock -ay >>${LOGOUT} 2>>${LOGOUT}
+  ${PKG_CMD} -c ${STAGEMNT} ${PKG_CFLAG} ${PKG_FLAG} ${ABI_FLAG} set -ay -v 0 >>${LOGOUT} 2>>${LOGOUT}
 
   # Check if we have -devel or -debug packages and re-install them
   DEVPKG="NO"
@@ -668,9 +680,6 @@ prep_pkgs_chroot()
 
   # Set the default ABI
   FBVER=$(${PKG_CMD} ${PKG_CFLAG} ${PKG_FLAG} rquery -U '%v' ${BASENAME}-runtime | cut -d '.' -f 1)
-  NEWABI="FreeBSD:${FBVER}:`uname -m`"
-  ABI_FLAG="-o ABI=$NEWABI"
-  export ABI_FLAG
   echo_log "Setting new system ABI to: $NEWABI"
 
   # Start by installing runtime which is essential to boot-strapping others
