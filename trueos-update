@@ -418,7 +418,7 @@ pkg_fetch_verify() {
   fetchRetries=$(expr $fetchRetries + 1)
 
   # Attempt to fetch the package
-  run_cmd_wtee "${PKG_CMD} ${PKG_CFLAG} ${PKG_FLAG} fetch -U -d -y $fetchPkg" "${PKGUPGRADELOG}"
+  run_cmd_wtee "${PKG_CMD} ${PKG_CFLAG} ${PKG_FLAG} ${ABI_FLAG} fetch -U -d -y $fetchPkg" "${PKGUPGRADELOG}"
   _err=$?
   tail -n 1 ${PKGUPGRADELOG} | grep -q -e "failed checksum" -e "timed out"
   if [ $_err -ne 0 -o $? -eq 0 ]; then
