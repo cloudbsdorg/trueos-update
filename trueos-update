@@ -188,6 +188,19 @@ TrueOS: {
 EOF
   fi
 
+  # Update the snapshot repo url
+  cat /etc/pkg/TrueOS.conf | grep -v "^#" | grep "url:" | grep -q "/snapshot/ports/"
+  if [ $? -eq 0 ] ; then
+	  cat >/etc/pkg/TrueOS.conf <<EOF
+TrueOS: {
+  url: "https://pkg.trueos.org/pkg/snapshot/\${ABI}/latest",
+  signature_type: "pubkey",
+  pubkey: "/usr/share/keys/pkg/trueos.pub",
+  enabled: yes
+}
+EOF
+  fi
+
 }
 
 checkup_pkgs() {
