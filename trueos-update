@@ -647,6 +647,7 @@ prep_pkgs_chroot()
 
   # Figure out the base package name, if its FreeBSD or $OTHER
   BASENAME=$(${PKG_CMD} ${PKG_CFLAG} ${PKG_FLAG} ${ABI_FLAG} rquery '%o %n-%v' | grep '^base ' | grep -e '-runtime-' | head -n 1 | awk '{print $2}' | cut -d '-' -f 1)
+  echo_log "Using $BASENAME for base packages"
 
   # Unlock all packages first
   echo_log "Unlocking packages..."
@@ -680,6 +681,7 @@ prep_pkgs_chroot()
   fi
 
   # Remove *ALL* the packages inside chroot, we need a clean slate to avoid pkg conflicts going sideways
+  echo "${PKG_CMD} -c ${STAGEMNT} ${PKG_CFLAG} ${PKG_FLAG} ${ABI_FLAG} delete -yg \*" >>${LOGOUT}
   ${PKG_CMD} -c ${STAGEMNT} ${PKG_CFLAG} ${PKG_FLAG} ${ABI_FLAG} delete -yg \* >>${LOGOUT} 2>>${LOGOUT}
   if [ $? -ne 0 ] ; then
     echo_log "FAILED Deleting old base packages from chroot"
@@ -691,12 +693,10 @@ prep_pkgs_chroot()
     BLACKLISTPKG="$(jq -r '."blacklist" | join (" ")' /etc/trueos-base.json)"
   fi
 
-  # Set the default ABI
-  FBVER=$(${PKG_CMD} ${PKG_CFLAG} ${PKG_FLAG} rquery -U '%v' ${BASENAME}-runtime | cut -d '.' -f 1)
-  echo_log "Setting new system ABI to: $NEWABI"
-
   # Start by installing runtime which is essential to boot-strapping others
   PKG_DBDIR="${STAGEMNT}/var/db/trueos-update/pkgdb"
+  echo_log "Boot-strapping base runtime package"
+  echo "${PKG_CMD} -r ${STAGEMNT} ${PKG_CFLAG} ${PKG_FLAG} ${ABI_FLAG} install -U -yf ${BASENAME}-runtime" >>${LOGOUT}
   ${PKG_CMD} -r ${STAGEMNT} ${PKG_CFLAG} ${PKG_FLAG} ${ABI_FLAG} install -U -yf ${BASENAME}-runtime >>${LOGOUT} 2>>${LOGOUT}
   if [ $? -ne 0 ] ; then
       exit_err "Failed boot-strapping ${BASENAME}-runtime"
