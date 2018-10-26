@@ -452,15 +452,13 @@ dl_pkgs()
 
   # Update the DB first
   echo_log "Updating the package repo database..."
-  echo "${PKG_CMD} ${PKG_CFLAG} ${PKG_FLAG} update -f"
   ${PKG_CMD} ${PKG_CFLAG} ${PKG_FLAG} update -f >${STATEDIR}/update.out 2>&1
   if [ $? -ne 0 ] ; then
     grep -q "wrong ABI: " ${STATEDIR}/update.out
     if [ $? -eq 0 ] ; then
       # Get the new ABI
-      NEWABI=$(cat ${STATEDIR}/update.out | grep "wrong ABI: " | cut -d ':' -f 3-5 | tr -d ' ')
+      NEWABI=$(cat ${STATEDIR}/update.out | grep "wrong ABI: " | head -n 1 | cut -d ':' -f 3-5 | tr -d ' ')
       ABI_FLAG="-o ABI=${NEWABI}"
-      echo "${PKG_CMD} ${PKG_CFLAG} ${PKG_FLAG} ${ABI_FLAG} update -f"
       ${PKG_CMD} ${PKG_CFLAG} ${PKG_FLAG} ${ABI_FLAG} update -f >${STATEDIR}/update.out 2>&1
       if [ $? -ne 0 ] ; then
 	cat ${STATEDIR}/update.out
