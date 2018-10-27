@@ -458,6 +458,7 @@ dl_pkgs()
     if [ $? -eq 0 ] ; then
       # Get the new ABI
       NEWABI=$(cat ${STATEDIR}/update.out | grep "wrong ABI: " | head -n 1 | cut -d ':' -f 3-5 | tr -d ' ')
+      NEWABI=$(echo $NEWABI | sed 's|:*|:amd64|g')
       ABI_FLAG="-o ABI=${NEWABI}"
       ${PKG_CMD} ${PKG_CFLAG} ${PKG_FLAG} ${ABI_FLAG} update -f >${STATEDIR}/update.out 2>&1
       if [ $? -ne 0 ] ; then
