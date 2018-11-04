@@ -122,7 +122,7 @@ do
   fi
 done < /tmp/.pkgUpList
 rm /tmp/.pkgUpList
-rm /pkg-add.log
+if [ -e '/pkg-add.log' ]; then rm /pkg-add.log; fi
 
 # Update kernel hints
 kldxref /boot/kernel /boot/modules
